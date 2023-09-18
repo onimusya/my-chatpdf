@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "set NODE_OPTIONS='--max-old-space-size=8192' && next dev",
+    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=8192' next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -42,5 +42,8 @@
     "tailwindcss": "3.3.3",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.2.2"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }
