@@ -8,9 +8,12 @@ import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { is } from 'drizzle-orm'
 import { Loader2  } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 const FileUpload = () => {
-   const  [ uploading, setUploading ] = React.useState(false)
+    const router = useRouter()
+
+    const  [ uploading, setUploading ] = React.useState(false)
     const {mutate, isLoading} = useMutation({
         mutationFn: async ({ file_key, file_name }: { file_key: string, file_name: string }) => {
             const response = await axios.post('/api/create-chat', { file_key, file_name })
@@ -40,14 +43,15 @@ const FileUpload = () => {
                 }
 
                 mutate(data, {
-                    onSuccess: (data) => {
-                        console.log(data)
-                        //toast.success(data.message)
+                    onSuccess: ({ chat_id }) => {
+                        
+                        toast.success('Chat created!')
+                        router.push(`/chat/${chat_id}`)
 
                     },
                     onError: (err) => {
-                        console.error(err)
                         toast.error('Error creating chat.')
+                        console.error(err)                        
 
                     }
                 })
