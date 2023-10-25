@@ -12,13 +12,18 @@ export async function getEmbeddings(text: string) {
             model: 'text-embedding-ada-002',
             input: text.replace(/\n/g, " ")
         })
+
         const result = await response.json()
-        console.log("Embedding result:", result)
-        
-        return result.data[0].embedding as number[]
+        console.log("[/lib/embedding/getEmbedding] Result: ", result)
+        if (result?.error) {
+            throw new Error(result.error.message)
+        } else {
+            return result.data[0].embedding as number[]
+        }
         
     } catch (error) {
-        console.log('error calling openai embeddings api', error)
+        console.log('[/lib/embedding/getEmbedding] Error: ', error)
         throw error
+
     }
 }

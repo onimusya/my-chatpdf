@@ -29,29 +29,32 @@ type PDFPage = {
 
 export async function loadS3IntoPinecone(fileKey: string) {
     // 1. Obtain the pdf, download and read from pdf
-    console.log('Downloading s3 into file system')
+    console.log('[/lib/db/pinecone/loadS3IntoPinecone] Downloading s3 into file system')
     const file_name = await downloadFromS3(fileKey)
 
     if (!file_name) {
+        console.log('[/lib/db/pinecone/loadS3IntoPinecone] Error: Could not download from s3')
         throw new Error('Could not download from s3')
     }
 
     const loader = new PDFLoader(file_name)
     const pages = (await loader.load()) as PDFPage[] // load all pages within pdf
-    
+    console.log('[/lib/db/pinecone/loadS3IntoPinecone] Success load all pages within pdf:' + pages.length)
     // 2. split and segment the pdf
     const documents = await Promise.all(pages.map(prepareDocument))
+    console.log('[/lib/db/pinecone/loadS3IntoPinecone] Success split and segment the pdf pages into documents: ' + documents.length)
 
     // 3. vectorize and embed individual documents
     const vectors = await Promise.all(documents.flat().map(embedDocument))
+    console.log('[/lib/db/pinecone/loadS3IntoPinecone] Success vectorize and embed individual documents.')
 
     // 4 . upload to pincecone
     const client = await getPineconeClient()
     const pincodeIndex = client.Index('my-chatpdf')
-
-    console.log('Inserting vectors into pinecone')
+    
     const namespace = convertToAscii(fileKey)
-    PineconeUtils.chunkedUpsert(pincodeIndex, vectors, namespace, 10)
+    console.log(`[/lib/db/pinecone/loadS3IntoPinecone] Inserting vectors into pinecone, namespace:${namespace}.`)
+    PineconeUtils.chunkedUpsert(pincodeIndex, vectors, "", 10)
     return documents[0]
 
 }
@@ -59,8 +62,9 @@ export async function loadS3IntoPinecone(fileKey: string) {
 async function embedDocument(doc: Document) {
     try {
         const embeddings = await getEmbeddings(doc.pageContent)
-        
+
         const hash = md5(doc.pageContent)
+        console.log('[/lib/db/pinecone/embedDocument] Success embed document with hash ', hash)
 
         return {
             id: hash,
@@ -72,7 +76,7 @@ async function embedDocument(doc: Document) {
         } as Vector
 
     } catch (error) {
-        console.log('error embedding document', error)
+        console.log('[/lib/db/pinecone/embedDocument] Error: ', error)
         throw error
     }
 }
@@ -100,5 +104,6 @@ async function prepareDocument(page: PDFPage) {
         })
     ])
 
+    console.log(`[lib/db/pinecone/prepareDocument] Success split page into ${docs.length} documents.`)
     return docs
 }

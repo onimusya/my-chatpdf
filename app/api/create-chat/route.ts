@@ -16,9 +16,13 @@ export async function POST(req: Request, res: Response) {
     try {
         const body = await req.json()
         const { file_key, file_name } = body
+        console.log("[/api/create-chat/route] POST request")
         console.log( file_key, file_name )
+        console.log("[/api/create-chat/route] load from s3 to pinecone")
+        
         await loadS3IntoPinecone(file_key)
 
+        console.log("[/api/create-chat/route] insert data into neon db")
         const chat_id = await db.insert(chats).values({
             fileKey: file_key,
             pdfName: file_name,
